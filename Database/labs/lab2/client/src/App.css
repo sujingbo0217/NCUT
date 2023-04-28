@@ -1,0 +1,82 @@
+.App {
+  text-align: center;
+}
+
+div {
+  margin: 25px;
+  /* 620px or 745px in width */
+}
+
+.func_btn {
+  display: inline-block;
+  background: rgb(62, 38, 243);
+  color: rgb(254, 236, 217);
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.opt_btn {
+  display: inline-block;
+  background: rgb(255,192,203);
+  color: rgb(6, 17, 164);
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.btn:focus {
+  outline: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.form input {
+  width: 300px;
+  height: 60px;
+  margin: 10px;
+  font-size: 25px;
+}
+
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  border:1px solid black;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+  border:1px solid black;
+  width: 20%;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
