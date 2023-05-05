@@ -1,0 +1,7 @@
+.idea/
+.DS_Store
+logs
+__pycache__
+*.pyc
+requirements.txt
+image_management/migrations
