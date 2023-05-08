@@ -1,8 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 /*example*/
-const int b = 100;
 static int a;
+const int b \
+    = 100;
+char * message = "Hello, world!";
+char ch = 'c';
 
 int main() {
   // test goto
@@ -14,7 +18,11 @@ int main() {
   } else {
     goto 101;
   }
+
+  /* Test command */
+
   // print answer
   printf("%d\n", b);
+  printf("%s\n", message);
   return 0;
 }
