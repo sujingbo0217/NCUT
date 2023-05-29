@@ -1,0 +1,14 @@
+__pycache__
+requirements.txt
+
+# Editor directories and files
+.cph/
+.vscode
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
