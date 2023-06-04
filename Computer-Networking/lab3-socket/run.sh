@@ -13,4 +13,5 @@ num_clients=2
 for ((i=0; i<num_clients; i++))
 do
     python client/run.py &
+    sleep 1
 done

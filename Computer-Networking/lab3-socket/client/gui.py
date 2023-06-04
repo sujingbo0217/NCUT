@@ -137,10 +137,19 @@ class GUI:
     def send_message(self):
         if self.cli is not None:
             msg = self.send_box.get()
+
+            if msg[0] == '@':
+                proto = PRIVATE_CHAT
+                new_msg = msg + f':{self.username.get()}'
+            else:
+                proto = CHAT_CONTENT
+                new_msg = msg
+
             data = {
-                'protocol': CHAT_CONTENT,
-                'data': msg,
+                'protocol': proto,
+                'data': new_msg,
             }
+
             send_message(self.cli.sock, data)
             self.send_box.delete(0, tk.END)
             message(self.output_box, f'[You]: {msg}')
@@ -148,8 +157,6 @@ class GUI:
             messagebox.showwarning('Warning', 'Please connect to the server first')
 
     def private_chat(self, e):
-        msg = None
-        target = None
         indices = self.user_list_box.curselection()
         print(e)
 
@@ -157,15 +164,6 @@ class GUI:
             for k in indices:
                 target = self.user_list_box.get(k)
                 self.chat_content.set(f'@{target}: ')
-                msg = self.send_box.get()
-
-        if self.cli is not None and target is not None:
-            if self.cli.client_socket is None:
-                # Send private chat request to server Client -> Server
-                self.cli.send_private_chat_request(target, msg)
-            else:
-                # Send private chat message to client: Client <-> Client
-                self.cli.send_private_chat_message(target, msg)
 
     def close_window(self):
         if self.cli is not None:

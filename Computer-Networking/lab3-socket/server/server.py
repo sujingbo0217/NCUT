@@ -37,7 +37,7 @@ class Server(threading.Thread):
                              self.user_list_gui, self.user_list, self.output_box)
             sock.setDaemon(True)
             sock.start()
-            user_num = len(threading.enumerate())//2
+            user_num = len(threading.enumerate()) - 2
             if user_num == 1:
                 message(self.output_box, '<<1 user online>>')
             else:

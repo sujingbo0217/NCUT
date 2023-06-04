@@ -47,22 +47,12 @@ class Client(threading.Thread):
                     self.user_list_gui.set(self.user_list)
                 elif proto == CHAT_CONTENT:
                     message(self.output_box, msg.get('data'))
-                elif proto == PRIVATE_CHAT_S2C:
-                    # Server -> Client B
-                    username = data.get('username')
-                    user_socket = data.get('socket')
-                    self.client_socket[username] = user_socket
-                    sent_message = data.get('sent_message')
-                    message(self.output_box, f'@{username} sent {sent_message} privately to you')
-                elif proto == PRIVATE_CHAT_C2C:
-                    # Client B <-> Client A
-                    username = ''
-                    for uname, sock in self.client_socket.items():
-                        if sock == self.sock:
-                            username = uname
-                            break
-                    sent_message = f'[{username}]@You: {data}'
-                    message(self.output_box, sent_message)
+                elif proto == PRIVATE_CHAT:
+                    # Server -> Client
+                    split_str = data.split(':')
+                    username = split_str[-1].strip('@').strip()
+                    user_msg = ''.join(split_str[1:-1]).strip()
+                    message(self.output_box, f'[{username}@You]: {user_msg}')
                 else:
                     pass
             except Disconnection('Server Offline'):
@@ -90,26 +80,6 @@ class Client(threading.Thread):
                 break
             else:
                 pass
-
-    def send_private_chat_request(self, target: str, msg: str):
-        # Client -> Server
-        data = {
-            'protocol': PRIVATE_CHAT_C2S,
-            'data': {
-                'target': target,
-                'message': msg,
-            }
-        }
-        send_message(self.sock, data)
-
-    def send_private_chat_message(self, target: str, msg: str):
-        # Client -> Client
-        data = {
-            'protocol': PRIVATE_CHAT_C2C,
-            'data': msg,
-        }
-        send_message(self.client_socket.get(target), data)
-        message(self.output_box, f'[You]@{target}: {msg}')
 
     def stop_client(self):
         self.sock.close()

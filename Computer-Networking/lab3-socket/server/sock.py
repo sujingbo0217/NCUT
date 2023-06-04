@@ -10,7 +10,7 @@ from src.constant import *
 from utils.output import message
 from utils.receive import serialize
 from utils.send import broadcast, send_message
-from utils.error import Disconnection
+from utils.error import Disconnection, UserNotExists
 
 
 class Socket(threading.Thread):
@@ -45,20 +45,13 @@ class Socket(threading.Thread):
                     'data': new_msg,
                 }
                 broadcast(self.client_socket, new_data, [self.username])
-            elif proto == PRIVATE_CHAT_C2S:
-                target_name = data.get('target')
-                sent_message = data.get('message')
-                target_sock = self.client_socket.get(target_name)
-                if target_sock is not None:
-                    new_data = {
-                        'protocol': PRIVATE_CHAT_S2C,
-                        'data': {
-                            'username': target_name,
-                            'socket': self.client_socket.get(target_name),
-                            'sent_message': sent_message,
-                        },
-                    }
-                    send_message(self.conn, new_data)
+            elif proto == PRIVATE_CHAT:
+                username = data.split(':')[0].strip('@').strip()
+                if username in self.client_socket:
+                    # Send private message to client with username
+                    send_message(self.client_socket.get(username), recv)
+                else:
+                    raise UserNotExists('User Not Exists')
             else:
                 pass
 
