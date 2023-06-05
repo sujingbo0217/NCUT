@@ -29,7 +29,7 @@ class GUI:
         self.top_frame = tk.Frame(self.settings_frame)
         self.top_frame.pack(fill=tk.X, side=tk.TOP)
         self.ip_addr = tk.StringVar()
-        self.ip_addr.set('127.0.0.1')
+        self.ip_addr.set('0.0.0.0')
         self.port = tk.IntVar()
         self.port.set(6666)
 
