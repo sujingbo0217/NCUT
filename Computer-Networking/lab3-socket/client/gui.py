@@ -62,7 +62,7 @@ class GUI:
         # Message text
         self.message_bar = tk.Scrollbar(self.info_frame)
         self.message_bar.pack(fill=tk.Y, side=tk.LEFT)
-        self.output_box = tk.Text(self.info_frame, width=80, font=("Symbol", 14), yscrollcommand=self.message_bar.set)
+        self.output_box = tk.Text(self.info_frame, width=80, yscrollcommand=self.message_bar.set)
         self.output_box.pack(fill=tk.Y, side=tk.RIGHT)   # expand=True
 
         # Chat frame

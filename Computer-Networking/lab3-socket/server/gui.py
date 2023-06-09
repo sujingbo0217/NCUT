@@ -29,7 +29,7 @@ class GUI:
         self.top_frame = tk.Frame(self.settings_frame)
         self.top_frame.pack(fill=tk.X, side=tk.TOP)
         self.ip_addr = tk.StringVar()
-        self.ip_addr.set('0.0.0.0')
+        self.ip_addr.set('0.0.0.0')  # Local test: 127.0.0.1
         self.port = tk.IntVar()
         self.port.set(6666)
 
@@ -54,7 +54,7 @@ class GUI:
         # Message text
         self.message_bar = tk.Scrollbar(self.info_frame)
         self.message_bar.pack(fill=tk.Y, side=tk.LEFT)
-        self.output_box = tk.Text(self.info_frame, width=80, font=("Symbol", 14), yscrollcommand=self.message_bar.set)
+        self.output_box = tk.Text(self.info_frame, width=80, yscrollcommand=self.message_bar.set)
         self.output_box.pack(fill=tk.BOTH, expand=True)
 
         # Chat frame

@@ -1,7 +1,7 @@
 # -*- coding = utf-8 -*-
 # @Time : 2023/5/30 12:52 PM
 # @Author : Jingbo Su
-# @File : run.py
+# @File : server.py
 # @Software : PyCharm
 
 import socket
