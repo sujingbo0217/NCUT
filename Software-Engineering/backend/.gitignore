@@ -4,4 +4,6 @@ logs
 __pycache__
 *.pyc
 requirements.txt
-image_management/migrations
+migrations
+media
+mnist/dataset
