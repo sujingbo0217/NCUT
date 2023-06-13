@@ -238,6 +238,9 @@ class ImageViewsSet(ViewSet):
             pred, _ = net(input_image)
             prob = F.softmax(pred, dim=-1)
 
+            for i, p in enumerate(prob[0]):
+                print(f'p({i}) = {p}')
+
             _pred = pred.argmax(dim=1, keepdim=True).item()
             _prob = torch.max(prob).item()
 
