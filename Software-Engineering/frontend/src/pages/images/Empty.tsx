@@ -35,7 +35,7 @@ const Empty: React.FC = () => {
       <Layout>
         <Content style={{height: '85%'}}>
           <div style={{padding: '20%', minHeight: 'calc(100vh - 120px)', background: colorBgContainer}}>
-            <h1 style={{textAlign: 'center'}}>No Data</h1>
+            <h1 style={{textAlign: 'center', color:  'black'}}>No Data</h1>
           </div>
         </Content>
 

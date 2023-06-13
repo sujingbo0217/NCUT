@@ -86,11 +86,7 @@ const Gallery: React.FC = () => {
     setIsModalVisible(false);
   };
 
-  if (emptyPage) {
-    return (<Empty />);
-  }
-
-  return (
+  return emptyPage ? (<Empty />) : (
     <Layout style={{height: '100%'}}>
       <Sider>
         <div className="demo-logo-vertical"/>
