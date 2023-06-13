@@ -1,14 +1,18 @@
-import {Button, Carousel, Form, Input, InputNumber, Layout, Menu, message, theme, Upload} from 'antd';
-import ImgCrop from 'antd-img-crop';
-import { PlusOutlined } from '@ant-design/icons';
-import type {RcFile, UploadFile, UploadProps} from 'antd/es/upload/interface';
 import React, {useState} from 'react';
-import {LogoutOutlined, UploadOutlined, VideoCameraOutlined} from "@ant-design/icons";
 import {Link} from "react-router-dom";
-import {responseType, uploadType} from "../../types/users.ts";
-import {upload} from "../../apis/users.ts";
+import {useNavigate} from "react-router-dom";
+
+import {Button, Carousel, Form, InputNumber, Layout, Menu, message, theme, Upload} from 'antd';
+import type {RcFile, UploadFile, UploadProps} from 'antd/es/upload/interface';
+import {LogoutOutlined, UploadOutlined, VideoCameraOutlined} from "@ant-design/icons";
+import ImgCrop from 'antd-img-crop';
+
+import {responseType} from "../../types/images";
+import {uploadImage} from "../../apis/images";
 
 const Predict: React.FC = () => {
+  const navigate = useNavigate();
+
   const {
     Content,
     Footer,
@@ -27,9 +31,11 @@ const Predict: React.FC = () => {
     background: '#364d79',
   };
 
+  const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  const onChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
+  const onChange: UploadProps['onChange'] = ({fileList: newFileList}) => {
+    // console.log(newFileList);
     setFileList(newFileList);
   };
 
@@ -48,17 +54,50 @@ const Predict: React.FC = () => {
     imgWindow?.document.write(image.outerHTML);
   };
 
-  const [form] = Form.useForm();
-
-  const onFinish = async (values: uploadType) => {
-    console.log(values);
-    // const response = await upload(values) as responseType;
-    // if (response.result_code === 200) {
-    //   message.success('Upload Successfully!');
-    // } else {
-    //   message.error('Upload Failed!');
-    // }
+  const beforeUpload = (file) => {
+    if (fileList.length === 0) {
+      setFileList(file);
+    } else {
+      message.error('More than one file').then();
+    }
+    return false;
   }
+
+  const onFinish = async () => {
+    const label = form.getFieldValue('label');
+    const image = fileList[0];
+
+    const data = new FormData();
+    data.append('label', String(label));
+    data.append('image', image.originFileObj);
+
+    // console.log({
+    //   label: String(label),
+    //   image: image.originFileObj,
+    // });
+
+    try {
+      const response = await uploadImage(data) as responseType;
+      if (response.result_code === 201) {
+        navigate('/gallery');
+        message.success('Upload Successfully!');
+      } else {
+        message.error('Upload Failed!');
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  const onReset = () => {
+    form.resetFields();
+    setFileList([]);
+  };
+
+  const buttonLayout = {
+    wrapperCol: {offset: 6},
+    style: {marginTop: '2.5%'},
+  };
 
   return (
     <Layout style={{height: '100%'}}>
@@ -96,11 +135,11 @@ const Predict: React.FC = () => {
               name="basic"
               form={form}
               labelCol={{span: 10}}
-              wrapperCol={{span: 6}}
+              wrapperCol={{span: 4}}
               initialValues={{remember: true}}
               onFinish={onFinish}
               autoComplete="off"
-              style={{marginTop: '3%'}}
+              style={{marginTop: '2%'}}
             >
               <h1 style={{textAlign: "center"}}>Upload your handwriting</h1>
 
@@ -109,35 +148,33 @@ const Predict: React.FC = () => {
                 name="label"
                 rules={[{required: true, message: 'Input image label'}]}
               >
-                <InputNumber min={0} max={9} />
+                <InputNumber min={0} max={9}/>
               </Form.Item>
 
-              <Form.Item
-                label="Image"
-                name="image"
-                valuePropName="fileList"
-                rules={[{required: true, message: 'Upload image'}]}
-              >
+              <div style={{marginTop: '3%', marginLeft: '0.6%'}}>
                 <ImgCrop rotationSlider>
                   <Upload
-                    action="http://127.0.0.1:8000/api/v1/upload_server"
                     listType="picture-card"
                     fileList={fileList}
                     onChange={onChange}
                     onPreview={onPreview}
+                    beforeUpload={beforeUpload}
                   >
                     {fileList.length < 1 && (
                       <div>
-                        <UploadOutlined />
-                        <div style={{ marginTop: 8 }}>Upload</div>
+                        <UploadOutlined/>
+                        <div style={{marginTop: 6}}>Upload</div>
                       </div>
                     )}
                   </Upload>
                 </ImgCrop>
-              </Form.Item>
+              </div>
 
-              <Form.Item wrapperCol={{offset: 8, span: 16}}>
-                <Button type="primary" htmlType="submit">
+              <Form.Item {...buttonLayout}>
+                <Button htmlType="button" onClick={onReset} style={{marginRight: '20px'}}>
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType='submit'>
                   Submit
                 </Button>
               </Form.Item>

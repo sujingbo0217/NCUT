@@ -1,8 +1,13 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 
-import {Col, Layout, Menu, Row, theme, Image} from "antd";
-import {LogoutOutlined, UploadOutlined, VideoCameraOutlined} from "@ant-design/icons";
+import {Menu, Layout, theme, Card, Button, Modal, message} from "antd";
+import {LogoutOutlined, UploadOutlined, VideoCameraOutlined, DownloadOutlined} from "@ant-design/icons";
+
+import {imageType, responseType, imageInfoType} from "../../types/images";
+import {deleteImage, displayImage} from "../../apis/images";
+import Empty from "./Empty";
+import "./Gallery.css";
 
 const Gallery: React.FC = () => {
   const {
@@ -14,6 +19,76 @@ const Gallery: React.FC = () => {
   const {
     token: {colorBgContainer},
   } = theme.useToken();
+
+  const [selectedImage, setSelectedImage] = useState<imageType | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [images, setImages] = useState<imageType[]>([]);
+  const [emptyPage, setEmptyPage] = useState(false);
+
+  const fetchImages = async (): Promise<void> => {
+    try {
+      const response = await displayImage() as responseType;
+      const record = response.content.record;
+
+      if (response.result_code === 200) {
+        if (record.length === 0) {
+          setEmptyPage(true);
+          return ;
+        }
+        const newImageArray: imageType[] = record.map((img: imageInfoType) => {
+          const result: string = img.result ? 'Correct' : 'Wrong';
+          const description = `${img.label}/${img.pred} | p = ${img.prob}`;
+          return {
+            id: img.id,
+            url: `${import.meta.env.VITE_APP_BASE_API}${img.url}`,
+            result: result,
+            description: description,
+          };
+        });
+        setImages(newImageArray);
+      } else {
+        message.error(response.error);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  useEffect(() => {
+    fetchImages().then().catch(err => {
+      console.log(err);
+    });
+  }, []);
+
+  const handleDeleteImage = async (id: number) => {
+    setImages(prevImages => prevImages.filter(image => image.id !== id));
+    for (let i = 0; i < images.length; i++) {
+      if (images[i].id === id) {
+        const response = await deleteImage(String(id)) as responseType;
+        const result_code = response.result_code;
+        if (result_code === 200) {
+          message.success('Image deleted').then();
+        } else {
+          message.error('Image deleted failed').then();
+        }
+        break;
+      }
+    }
+  };
+
+  const handleImageClick = (image: imageType) => {
+    setSelectedImage(image);
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setSelectedImage(null);
+    setIsModalVisible(false);
+  };
+
+  if (emptyPage) {
+    return (<Empty />);
+  }
 
   return (
     <Layout style={{height: '100%'}}>
@@ -34,21 +109,47 @@ const Gallery: React.FC = () => {
 
       <Layout>
         <Content style={{height: '85%'}}>
-          <div style={{paddingLeft: '20%', paddingRight: '20%', paddingTop: '10%', minHeight: 'calc(100vh - 120px)', background: colorBgContainer}}>
-            <Image.PreviewGroup
-              preview={{
-                onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-              }}
+          <div
+            style={{
+              paddingLeft: '5%',
+              paddingRight: '5%',
+              paddingTop: '5%',
+              minHeight: 'calc(100vh - 120px)',
+              background: colorBgContainer
+            }}
+          >
+            <div className="gallery">
+              {images.map(image => (
+                <Card
+                  key={image.id}
+                  hoverable
+                  style={{ width: 150, margin: 10 }}
+                  cover={<img src={image.url} alt={'error'} className="resized-image"/>}
+                  onClick={() => handleImageClick(image)}
+                  actions={[
+                    <Button onClick={() => handleDeleteImage(image.id)} danger>
+                      Delete
+                    </Button>,
+                    <Button>
+                      <a href={image.url} download>
+                        <DownloadOutlined/>
+                      </a>
+                    </Button>,
+                  ]}
+                >
+                  <Card.Meta title={image.result} description={image.description} />
+                </Card>
+              ))}
+            </div>
+            <Modal
+              visible={isModalVisible}
+              onCancel={handleModalClose}
+              footer={null}
             >
-              <Row gutter={[16, 16]}>
-                {[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,].map(() => (
-                  <Col span={4}>
-                    <div>Description</div>
-                    <Image src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"/>
-                  </Col>
-                ))}
-              </Row>
-            </Image.PreviewGroup>
+              {selectedImage && (
+                <img src={selectedImage.url} alt={'error'} style={{ width: '100%' }} />
+              )}
+            </Modal>
           </div>
         </Content>
 

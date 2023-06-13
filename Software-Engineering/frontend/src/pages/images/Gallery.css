@@ -1,0 +1,9 @@
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.resized-image {
+  width: 100%;
+  height: 145px; /* Adjust the desired height for the images */
+}

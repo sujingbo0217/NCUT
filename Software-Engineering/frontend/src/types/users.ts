@@ -14,8 +14,3 @@ export interface responseType {
   error?: string,
   content: object,
 }
-
-export interface uploadType {
-  label: string,
-  image: any,
-}
