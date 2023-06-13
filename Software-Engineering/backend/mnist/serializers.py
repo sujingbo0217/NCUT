@@ -27,10 +27,21 @@ class ImageSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         image = Images.objects.create(
-            userId=validated_data['userId'],
             image=validated_data['image'], name=validated_data['name'],
             label=validated_data['label'], pred=validated_data['pred'],
             prob=validated_data['prob'], result=validated_data['result']
         )
         image.save()
         return image
+
+
+class ImageInfoSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=64)
+    url = serializers.SerializerMethodField()
+    label = serializers.CharField(max_length=4)  # User give
+    pred = serializers.CharField(max_length=4)  # Predicted by mlp
+    prob = serializers.CharField(max_length=8)  # Predict probability
+    result = serializers.BooleanField()  # Diff between real label and predict result
+
+    def get_url(self, obj):
+        return obj.image.url

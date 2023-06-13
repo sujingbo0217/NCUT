@@ -1,32 +1,28 @@
 import io
 
-from core import settings
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.viewsets import ViewSet
 
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
-
+from PIL import Image
+from mnist.mnist.mlp import MLP
 from utils.response import APIResponse
 from utils.request import get_request, get_image
-
-from mnist.mnist.mlp import MLP
-from PIL import Image
-
-import torch
-import torch.nn.functional as F
-import torchvision.transforms as transforms
 # middleware import
 
-from .models import Users, Images
-from .serializers import UserSerializer, ImageSerializer
+from .models import Images
+from .serializers import UserSerializer, ImageSerializer, ImageInfoSerializer
 # models import
 
 # Create your views here.
 class UserViewSet(ViewSet):
-    queryset = Users.objects.all()
     serializer_class = UserSerializer
 
     @swagger_auto_schema(
@@ -53,7 +49,8 @@ class UserViewSet(ViewSet):
         result = get_request(request, openapi.IN_QUERY)
         username = result.get('username')
         password = result.get('password')
-        is_existed = self.queryset.filter(username=username).exists()
+        queryset = Images.objects.all()
+        is_existed = queryset.filter(username=username).exists()
         if is_existed:
             return APIResponse(error='User exists', status=status.HTTP_400_BAD_REQUEST)
 
@@ -95,7 +92,8 @@ class UserViewSet(ViewSet):
         result = get_request(request, openapi.IN_QUERY)
         username = result.get('username')
         password = result.get('password')
-        user = self.queryset.filter(username=username)
+        queryset = Images.objects.all()
+        user = queryset.filter(username=username)
 
         is_existed = user.exists()
         if not is_existed:
@@ -111,23 +109,50 @@ class UserViewSet(ViewSet):
 
 
 class ImageViewsSet(ViewSet):
-    queryset = Images.objects.all()
     serializer_class = ImageSerializer
 
-    def upload_server(self, request: Request):
-        name, image = get_image(request)
-        url = f'{settings.MEDIA_ROOT}/upload_server/{name}'
-        with open(url, 'wb') as f:
-            for line in image:
-                f.write(line)
-        return APIResponse(url=url, status=status.HTTP_201_CREATED)
+    # ************************** GET *************************** #
+
+    @swagger_auto_schema(
+        operation_description="Get an image download url by ID",
+        manual_parameters=[
+        ],
+        security=[], tags=['MNIST'], operation_summary='Get all images',
+        responses={status.HTTP_200_OK: '200', status.HTTP_404_NOT_FOUND: '404'})
+    def display(self, request: Request):
+        queryset = Images.objects.all()
+        serializer = ImageInfoSerializer(instance=queryset, many=True)
+        return APIResponse(data=serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_description="Get an image download url by ID",
+        manual_parameters=[
+            openapi.Parameter(
+                "id",
+                openapi.IN_QUERY,
+                description="image ID",
+                required=True,
+                type=openapi.TYPE_INTEGER
+            ),
+        ],
+        security=[], tags=['MNIST'], operation_summary='Get download url',
+        responses={status.HTTP_200_OK: '200', status.HTTP_404_NOT_FOUND: '404'})
+    def download(self, request: Request):
+        _id = get_request(request, openapi.IN_QUERY).get('id')
+        # image = Images.objects.get(id=_id)
+        queryset = Images.objects.all()
+        image = queryset.filter(id=_id)
+        serializer = self.serializer_class(image)
+        return APIResponse(data=serializer, img_url=image.image.url)
+
+    # ************************** POST *************************** #
 
     @swagger_auto_schema(
         operation_description="Upload an image",
         manual_parameters=[
             openapi.Parameter(
                 'label',
-                openapi.IN_QUERY,
+                openapi.IN_FORM,
                 description="Image label",
                 required=True,
                 type=openapi.TYPE_STRING,
@@ -143,15 +168,12 @@ class ImageViewsSet(ViewSet):
         security=[], tags=['MNIST'], operation_summary='Upload an image',
         responses={status.HTTP_200_OK: '200', status.HTTP_404_NOT_FOUND: '404'})
     def upload(self, request: Request):
-        result = get_request(request, openapi.IN_QUERY)
+        result = get_request(request, openapi.IN_BODY)
 
         # created = datetime.now()
-        label = result.get('label')     # True label
-        name, image = get_image(request)
+        label = result.get('label')  # True label
+        name, image = get_image(request, 'image')
         pred, prob = self.predict(image)
-
-        # image_object = Images(image=image, name=name, label=label,
-        #                       pred=str(pred), prob=str(prob), result=(int(pred) == int(label)))
 
         image_data = dict({
             'image': image,
@@ -173,8 +195,10 @@ class ImageViewsSet(ViewSet):
         except Exception as e:
             print(e)
 
+    # ************************** DELETE *************************** #
+
     @swagger_auto_schema(
-        operation_description="Get an image download url by ID",
+        operation_description="Delete an image by ID",
         manual_parameters=[
             openapi.Parameter(
                 "id",
@@ -184,14 +208,15 @@ class ImageViewsSet(ViewSet):
                 type=openapi.TYPE_INTEGER
             ),
         ],
-        security=[], tags=['MNIST'], operation_summary='Get download url',
+        security=[], tags=['MNIST'], operation_summary='Delete an image',
         responses={status.HTTP_200_OK: '200', status.HTTP_404_NOT_FOUND: '404'})
-    def download(self, request: Request):
+    def delete(self, request: Request):
         _id = get_request(request, openapi.IN_QUERY).get('id')
-        # image = Images.objects.get(id=_id)
-        image = self.queryset.filter(id=_id)
-        serializer = self.serializer_class(image)
-        return APIResponse(data=serializer, img_url=image.image.url)
+        image = Images.objects.get(id=_id)
+        if image is not None:
+            image.delete()
+            return APIResponse(status=status.HTTP_200_OK)
+        return APIResponse(status=status.HTTP_404_NOT_FOUND)
 
     @staticmethod
     def predict(image):
@@ -206,7 +231,7 @@ class ImageViewsSet(ViewSet):
 
         # Predict the image use mlp
         net = MLP(28 * 28, 10)
-        net.load_state_dict(torch.load('mnist/mnist.pt', map_location=torch.device('cpu')))
+        net.load_state_dict(torch.load('mnist/mnist/mnist.pt', map_location=torch.device('cpu')))
         net.eval()
 
         with torch.no_grad():
@@ -217,12 +242,3 @@ class ImageViewsSet(ViewSet):
             _prob = torch.max(prob).item()
 
         return _pred, _prob
-
-    def delete(self, request: Request):
-        _id = get_request(request, openapi.IN_QUERY).get('id')
-        image = Images.objects.get(id=_id)
-        image.delete()
-        return status.HTTP_200_OK
-
-    def display(self, request: Request):
-        user_id = request.session.get('id')

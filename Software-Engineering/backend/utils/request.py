@@ -21,7 +21,7 @@ def get_request(request: Request, method: str):
     # openapi.IN_BODY
     return request.data
 
-def get_image(request: Request):
-    image = request.FILES.get('image')
-    name = image.name.split('.')[0]
+def get_image(request: Request, file_name: str):
+    image = request.FILES.get(file_name)
+    name = image.name
     return name, image

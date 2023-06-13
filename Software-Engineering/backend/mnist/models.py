@@ -10,7 +10,6 @@ class Users(models.Model):
 
 
 class Images(models.Model):
-    userId = models.CharField(max_length=64, help_text='User ID')
     image = models.ImageField(upload_to='images/')
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=64, help_text='Image name')  # User give
